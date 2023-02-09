@@ -1,0 +1,65 @@
+body {
+	background: #2c293c;
+	color: white;
+	margin: 0;
+	padding: 0;
+}
+
+.container {
+	background: #161828;
+	margin: 50px 10%;
+	padding: 50px 20px;
+	width: calc(80% - 40px);
+	border-radius: 50px;
+}
+
+.heading-box {
+	display: grid;
+	place-items: center;
+
+	height: 100px;
+	padding: 50px 0;
+}
+
+.meal-container {
+
+	/* margin: 20% 0;
+	width: 80%; */
+}
+
+h1, h2 {
+	font-family: "Century Gothic";
+}
+
+h1 {
+	margin: 0;
+	padding: 0;
+}
+
+img {
+	width: 300px;
+}
+
+.row {
+	display: flex;
+	font-family: Calibri;
+	gap: 20px;
+	/* padding: 0 20px; */
+}
+
+.youtube-row {
+	display: grid;
+	place-items: center;
+}
+
+button {
+	background: #236bfe;
+	color: white;
+	padding: 10px 20px;
+	border-radius: 10px;
+	cursor: pointer;
+}
+
+.instructions {
+	text-align: justify;
+}
