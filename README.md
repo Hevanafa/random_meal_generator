@@ -1,6 +1,23 @@
-# Tauri + React + Typescript
+# Random Meal Generator
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+The idea is from https://www.florin-pop.com/blog/2019/09/100-days-100-projects/
+
+I made the design, based on some showcase on Dribbble.
+
+## Installation
+
+```powershell
+npm i -g pnpm
+pnpm i
+```
+
+## Development
+
+`pnpm tauri dev`
+
+## Building
+
+`pnpm tauri build`
 
 ## Recommended IDE Setup
 
