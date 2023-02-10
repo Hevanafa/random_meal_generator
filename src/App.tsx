@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/tauri";
-import { range } from "lodash";
+import { appWindow } from "@tauri-apps/api/window";
+import { range, zip } from "lodash";
 import axios from "axios";
 import "./App.css";
 
@@ -16,13 +17,13 @@ class Meal {
     strTags: string; // "Chocolate,Desert,Snack",
     strYoutube: string; // "https://www.youtube.com/watch?v=Pi89PqsAaAg,
 
-    strIngredient1: string; // "Dark Chocolate,
-    strIngredient2: string; // "Milk Chocolate,
-    strIngredient3: string; // "Salted Butter,
+    // strIngredient1: string; // "Dark Chocolate,
+    // strIngredient2: string; // "Milk Chocolate,
+    // strIngredient3: string; // "Salted Butter,
 
-    strMeasure1: string; // "200g",
-    strMeasure2: string; // "100g ",
-    strMeasure3: string; // "250g",
+    // strMeasure1: string; // "200g",
+    // strMeasure2: string; // "100g ",
+    // strMeasure3: string; // "250g",
 
     strSource: string; // "https://www.bbcgoodfood.com/recipes/2121648/bestever-chocolate-raspberry-brownies",
     strImageSource: null;
@@ -38,13 +39,39 @@ class Meal {
 			(this as any)[`strIngredient${ idx }`].length > 0;
 	}
 
-	getStrIngredient(idx: number): string | undefined {
+	getIngredient(idx: number): string | undefined {
 		return (this as any)["strIngredient" + idx];
 	}
 
 	// 1-20
-	getStrMeasure(idx: number): string | undefined {
+	getMeasurement(idx: number): string | undefined {
 		return (this as any)["strMeasure" + idx];
+	}
+
+	get ingredients(): Array<string> {
+		return range(1, 21)
+			.filter(i => this.hasIngredient(i))
+			.map(i => this.getIngredient(i) ?? "");
+	}
+
+	get measurements(): Array<string> {
+		return range(1, 21)
+			.filter(i => this.hasIngredient(i))
+			.map(i => this.getMeasurement(i) ?? "")
+	}
+
+	/**
+	 * @returns the ingredient & the measurement
+	 */
+	get ingredientPairs(): [string, string][] {
+		return zip(this.ingredients, this.measurements)
+			.map(pair => [pair[0] ?? "", pair[1] ?? ""]);
+	}
+
+	get instructions(): Array<string> {
+		const output = this.strInstructions.split(".").map(line => line.trim() + ".");
+		output.pop();
+		return output;
 	}
 }
 
@@ -60,6 +87,7 @@ function MealJsx(props: { meal: Meal | null }) {
 	return (
 		<div className="meal-container">
 			<div className="row">
+				{/** Left column */}
 				<div className="cell">
 					<img src={ meal.strMealThumb } alt={ "the picture of " + meal.strMeal } />
 
@@ -82,22 +110,28 @@ function MealJsx(props: { meal: Meal | null }) {
 
 					<ul>
 					{
-						range(1, 21)
-						.filter(i => meal.hasIngredient(i))
-						.map(i =>
-							<li key={"ingredient_" + i}>
-								{ meal.getStrIngredient(i) + ": " + meal.getStrMeasure(i) }
+						meal
+						.ingredientPairs
+						.map(([ingredient, measurement], idx) =>
+							<li key={"ingredient_" + idx}>
+								{ ingredient }: { measurement }
 							</li>
 						)
 					}
 					</ul>
 				</div>
 
+				{/** Right column */}
 				<div className="cell">
-					<h2>{ meal.strMeal }</h2>
+					<h1>{ meal.strMeal }</h1>
 					<p>ID: { meal.idMeal }</p>
+					<a href={ meal.strSource } target="_blank">Source Link</a>
 
-					<p className="instructions">{ meal.strInstructions }</p>
+					<h2>Instructions</h2>
+					<ol className="instructions">
+						{ meal.instructions.map((item, idx) =>
+							<li key={`instruction_${ idx }`}>{ item }</li>) }
+					</ol>
 				</div>
 			</div>
 
@@ -106,7 +140,7 @@ function MealJsx(props: { meal: Meal | null }) {
 
 			<div className="youtube-row">
 				<iframe width="560" height="315"
-					src={ "https://www.youtube.com/embed/" + (meal.strYoutube.split("?").at(-1) ?? "") } // "https://www.youtube.com/embed/5Q5cNoCxp1g"
+					src={ "https://www.youtube.com/embed/" + (meal.strYoutube.split("?").at(-1) ?? "").replace("v=", "") } // "https://www.youtube.com/embed/5Q5cNoCxp1g"
 					title="YouTube video player"
 					frameBorder="0"
 					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -117,10 +151,18 @@ function MealJsx(props: { meal: Meal | null }) {
 }
 
 function App() {
-	// const [greetMsg, setGreetMsg] = useState("");
-	// const [name, setName] = useState("");
 	const [isFetching, setIsFetching] = useState(false);
 	const [meal, setMeal] = useState<Meal | null>(null);
+
+	// simulate componentDidMount
+	useEffect(() => {
+		let newTitle = "Random Meal Generator - By Hevanafa (Feb 2023)";
+
+		if (meal)
+			newTitle += " - " + meal.strMeal;
+		
+		appWindow.setTitle(newTitle).then(() => {}).catch(e => console.error(e));
+	}, [meal]);
 
 	// async function greet() {
 	// 	// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -140,6 +182,8 @@ function App() {
 			console.log(data);
 
 			setMeal(new Meal(data.meals[0]));
+		} catch (e) {
+			console.error(e);
 		} finally {
 			setIsFetching(false);
 		}
@@ -150,12 +194,28 @@ function App() {
 			<div className="heading-box">
 				<h1>Random Meal Generator</h1>
 
-				<button type="button" onClick={() => fetchMeal()}>
-					Get Meal
+				<button
+					type="button"
+					disabled={ isFetching }
+					onClick={() => fetchMeal()}>
+
+						{
+							isFetching
+							? "Fetching recipe..."
+							: "Get Meal"
+						}
 				</button>
 			</div>
 
 			<MealJsx meal={meal} />
+
+			<div className="footer">
+				<div>Rust + Tauri + Vite + React.js + TypeScript</div>
+				<div>API: <a href="https://www.themealdb.com/api.php" target="_blank">themealdb.com</a></div>
+				<div>Programming & design by Hevanafa</div>
+				<div>Version 0.1, Feb 2023</div>
+			</div>
+	
 		</div>
 	);
 }
