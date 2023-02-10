@@ -212,7 +212,7 @@ function App() {
 			<div className="footer">
 				<div>Rust + Tauri + Vite + React.js + TypeScript</div>
 				<div>API: <a href="https://www.themealdb.com/api.php" target="_blank">themealdb.com</a></div>
-				<div>Programming & design by Hevanafa</div>
+				<div>Programming & design by <a href="https://github.com/Hevanafa" target="_blank">Hevanafa</a></div>
 				<div>Version 0.1, Feb 2023</div>
 			</div>
 	
